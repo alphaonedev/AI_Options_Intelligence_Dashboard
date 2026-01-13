@@ -27,6 +27,27 @@ Real-time anomaly surveillance with:
 - Risk Radar Visualization
 - Detection Timeline
 
+### 4. AI Neural Pattern Recognition (`ai_neural_patterns_dashboard.html`) 🆕
+AI-exclusive computational analysis revealing patterns invisible to human perception:
+- Gamma Pin Magnetism Zones (SPY $696, NVDA $185)
+- IV Surface Micro-Irregularities (Z-score analysis)
+- Hidden Market Maker Positioning Signals (2062:1 bid ratios)
+- Delta Flow Analysis (Net delta +20.92)
+- Theta Decay Rate Anomalies (-469%/day extremes)
+- Greek Correlation Matrix (0.9828 Gamma-Vega correlation)
+- Probability-Weighted Expected Moves
+- Cross-Asset Regime Intelligence
+
+### 5. AI Microstructure Analysis (`ai_microstructure_dashboard.html`) 🆕
+Intraday hidden patterns only AI can detect:
+- Volume Profile Anomalies (6.5x spike detection)
+- Real-Time Momentum Matrix
+- Intraday Price Dislocations
+- Volatility Regime Classification
+- Sector Rotation Flow Analysis
+- Bid-Ask Imbalance Tracking
+- Cross-Asset Divergence Mapping
+
 ## Files Included
 
 ```
