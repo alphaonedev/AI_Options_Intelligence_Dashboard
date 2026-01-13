@@ -452,6 +452,104 @@
             color: var(--accent-primary);
         }
 
+        /* Legal Footer Styles */
+        .legal-footer {
+            background: #0d1117;
+            border-top: 1px solid #21262d;
+            padding: 40px 20px;
+            margin-top: 40px;
+        }
+
+        .legal-footer .legal-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .legal-footer .disclaimer-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #f0b429;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 20px;
+        }
+
+        .legal-footer .disclaimer-header svg {
+            width: 18px;
+            height: 18px;
+            fill: #f0b429;
+        }
+
+        .legal-footer .disclaimer-text {
+            color: #8b949e;
+            font-size: 0.9rem;
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+
+        .legal-footer .disclaimer-text strong {
+            color: #c9d1d9;
+        }
+
+        .legal-footer .data-source {
+            color: #8b949e;
+            font-size: 0.85rem;
+            margin-top: 20px;
+        }
+
+        .legal-footer .data-source strong {
+            color: #c9d1d9;
+        }
+
+        .licensing-footer {
+            background: #010409;
+            border-top: 1px solid #21262d;
+            padding: 25px 20px;
+        }
+
+        .licensing-footer .licensing-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .licensing-footer .copyright {
+            color: #8b949e;
+            font-size: 0.85rem;
+        }
+
+        .licensing-footer .copyright a {
+            color: #58a6ff;
+            text-decoration: none;
+        }
+
+        .licensing-footer .license-badges {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #8b949e;
+            font-size: 0.85rem;
+        }
+
+        .licensing-footer .license-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border: 1px solid #8b949e;
+            border-radius: 50%;
+            font-size: 0.65rem;
+            font-weight: 700;
+        }
+
         /* Status indicator */
         .status-bar {
             display: flex;
@@ -698,14 +796,46 @@
             <div class="footer-logo">🧠</div>
             <p>AI Options Intelligence Hub</p>
             <p>Analysis Date: January 12, 2026 | 20:45 ET</p>
-            <p style="margin-top: 15px; color: var(--text-tertiary); font-size: 0.8rem;">
-                Data Source: Alpaca Markets API | This is not financial advice
-            </p>
             <div class="footer-links">
                 <a href="options_ai_dashboard.html">Intelligence Dashboard</a>
                 <a href="anomaly_detection_dashboard.html">Anomaly Center</a>
             </div>
         </footer>
+    </div>
+
+    <!-- Legal Disclaimer Footer -->
+    <div class="legal-footer">
+        <div class="legal-container">
+            <div class="disclaimer-header">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                IMPORTANT LEGAL DISCLAIMER
+            </div>
+            <p class="disclaimer-text">
+                This platform and all information contained herein is provided for <strong>informational and educational purposes only</strong> and does not constitute investment advice, financial advice, trading advice, or any other sort of advice. <strong>Nothing on this platform should be construed as a recommendation to buy, sell, or hold any security, cryptocurrency, derivative, or other financial instrument.</strong>
+            </p>
+            <p class="disclaimer-text">
+                The analysis presented is based on real-time market data, statistical models, and AI-generated interpretations which may contain errors, inaccuracies, or omissions. <strong>Past performance is not indicative of future results.</strong> Always consult with a qualified financial advisor before making investment decisions. Trading involves substantial risk of loss.
+            </p>
+            <p class="data-source">
+                All market data sourced exclusively from <strong>Alpaca Markets API</strong>. Options chain data for SPY, QQQ, DIA, VNQ - Jan 16, 2026 expiration. Prices as of Jan 12, 2026 3:35 PM ET.
+            </p>
+        </div>
+    </div>
+
+    <!-- Licensing Footer -->
+    <div class="licensing-footer">
+        <div class="licensing-container">
+            <div class="copyright">
+                &copy; 2026 <a href="#">AlphaOne LLC</a> | Powered by Claude AI | Data by Alpaca Markets
+            </div>
+            <div class="license-badges">
+                CC BY-NC-ND 4.0
+                <span class="license-badge">CC</span>
+                <span class="license-badge">BY</span>
+                <span class="license-badge">NC</span>
+                <span class="license-badge">ND</span>
+            </div>
+        </div>
     </div>
 </body>
 </html>
