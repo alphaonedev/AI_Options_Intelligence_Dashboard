@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Anomaly Detection Dashboard | 82 Flagged Anomalies</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0d0d0d;
+            --bg-secondary: #1a1a1a;
+            --bg-card: #141414;
+            --bg-hover: #1f1f1f;
+            --accent-red: #ff3b3b;
+            --accent-orange: #ff9500;
+            --accent-yellow: #ffd60a;
+            --accent-green: #30d158;
+            --accent-blue: #0a84ff;
+            --accent-purple: #bf5af2;
+            --accent-pink: #ff375f;
+            --accent-cyan: #64d2ff;
+            --text-primary: #ffffff;
+            --text-secondary: #98989d;
+            --text-tertiary: #636366;
+            --border-color: #2c2c2e;
+            --danger-glow: rgba(255, 59, 59, 0.3);
+            --warning-glow: rgba(255, 149, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        /* Scanning animation background */
+        .scan-lines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(255, 59, 59, 0.03) 2px,
+                rgba(255, 59, 59, 0.03) 4px
+            );
+            animation: scan 8s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(100px); }
+        }
+
+        .container {
+            max-width: 1900px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px 30px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            margin-bottom: 25px;
+        }
+
+        .header-left h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-left h1 .warning-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px var(--danger-glow); }
+            50% { box-shadow: 0 0 40px var(--danger-glow), 0 0 60px var(--danger-glow); }
+        }
+
+        .header-left .subtitle {
+            color: var(--text-secondary);
+            margin-top: 5px;
+            font-size: 0.95rem;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .stat-pill {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            padding: 12px 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-pill .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .stat-pill .label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-pill.critical .value { color: var(--accent-red); }
+        .stat-pill.warning .value { color: var(--accent-orange); }
+        .stat-pill.info .value { color: var(--accent-blue); }
+
+        /* Summary Cards Row */
+        .summary-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .summary-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .summary-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .summary-card.iv-anomaly::before { background: var(--accent-red); }
+        .summary-card.greek-anomaly::before { background: var(--accent-orange); }
+        .summary-card.parity-violation::before { background: var(--accent-purple); }
+        .summary-card.skew-extreme::before { background: var(--accent-yellow); }
+        .summary-card.regime-signal::before { background: var(--accent-cyan); }
+
+        .summary-card .icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .summary-card .count {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .summary-card .type {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .summary-card.iv-anomaly .count { color: var(--accent-red); }
+        .summary-card.greek-anomaly .count { color: var(--accent-orange); }
+        .summary-card.parity-violation .count { color: var(--accent-purple); }
+        .summary-card.skew-extreme .count { color: var(--accent-yellow); }
+        .summary-card.regime-signal .count { color: var(--accent-cyan); }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr 350px;
+            gap: 20px;
+        }
+
+        @media (max-width: 1400px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            .summary-row {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        /* Severity Filter */
+        .severity-filter {
+            display: flex;
+            gap: 8px;
+        }
+
+        .filter-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        /* Anomaly List */
+        .anomaly-list {
+            max-height: 700px;
+            overflow-y: auto;
+        }
+
+        .anomaly-item {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .anomaly-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .anomaly-item.selected {
+            background: rgba(255, 59, 59, 0.1);
+            border-left: 3px solid var(--accent-red);
+        }
+
+        .anomaly-item .severity-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .severity-badge.critical {
+            background: rgba(255, 59, 59, 0.2);
+            color: var(--accent-red);
+        }
+
+        .severity-badge.high {
+            background: rgba(255, 149, 0, 0.2);
+            color: var(--accent-orange);
+        }
+
+        .severity-badge.medium {
+            background: rgba(255, 214, 10, 0.2);
+            color: var(--accent-yellow);
+        }
+
+        .severity-badge.low {
+            background: rgba(48, 209, 88, 0.2);
+            color: var(--accent-green);
+        }
+
+        .anomaly-item .symbol {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--accent-blue);
+            margin-bottom: 5px;
+        }
+
+        .anomaly-item .type {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .anomaly-item .details {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+        }
+
+        /* Detail Panel */
+        .detail-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .detail-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .detail-card h3 {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .metric-value {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .metric-value.danger { color: var(--accent-red); }
+        .metric-value.warning { color: var(--accent-orange); }
+        .metric-value.success { color: var(--accent-green); }
+
+        /* Charts */
+        .chart-container {
+            height: 250px;
+            position: relative;
+        }
+
+        /* Anomaly Table */
+        .anomaly-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .anomaly-table th {
+            text-align: left;
+            padding: 12px 15px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+        }
+
+        .anomaly-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .anomaly-table tbody tr:hover {
+            background: var(--bg-hover);
+        }
+
+        .anomaly-table .ticker {
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 25px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-red);
+            background: var(--bg-primary);
+        }
+
+        .timeline-item.warning::before {
+            border-color: var(--accent-orange);
+        }
+
+        .timeline-item.info::before {
+            border-color: var(--accent-blue);
+        }
+
+        .timeline-item .time {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            margin-bottom: 5px;
+        }
+
+        .timeline-item .content {
+            font-size: 0.9rem;
+        }
+
+        /* Radar Chart Container */
+        .radar-container {
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-tertiary);
+        }
+
+        /* Anomaly Categories Breakdown */
+        .category-breakdown {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .category-item {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .category-item .icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .category-item .info h4 {
+            font-size: 0.85rem;
+            margin-bottom: 2px;
+        }
+
+        .category-item .info span {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+
+        /* Heat severity scale */
+        .severity-scale {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 15px;
+        }
+
+        .severity-scale .bar {
+            height: 8px;
+            flex: 1;
+            border-radius: 4px;
+        }
+
+        .severity-scale .labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: var(--text-tertiary);
+            margin-top: 5px;
+        }
+
+        /* Action buttons */
+        .action-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px var(--danger-glow);
+        }
+
+        .action-btn.secondary {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        /* Full width sections */
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* Animation for new anomalies */
+        @keyframes flash {
+            0%, 100% { background: var(--bg-card); }
+            50% { background: rgba(255, 59, 59, 0.1); }
+        }
+
+        .anomaly-item.new {
+            animation: flash 1s ease 3;
+        }
+
+        /* Impact indicator */
+        .impact-meter {
+            display: flex;
+            gap: 3px;
+            margin-top: 8px;
+        }
+
+        .impact-bar {
+            width: 20px;
+            height: 6px;
+            background: var(--border-color);
+            border-radius: 2px;
+        }
+
+        .impact-bar.filled.low { background: var(--accent-green); }
+        .impact-bar.filled.medium { background: var(--accent-yellow); }
+        .impact-bar.filled.high { background: var(--accent-orange); }
+        .impact-bar.filled.critical { background: var(--accent-red); }
+    </style>
+</head>
+<body>
+    <div class="scan-lines"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>
+                    <span class="warning-icon">⚠️</span>
+                    AI Anomaly Detection Center
+                </h1>
+                <p class="subtitle">Real-time options market anomaly surveillance | 82 active flags detected</p>
+            </div>
+            <div class="header-right">
+                <div class="stat-pill critical">
+                    <div class="value">17</div>
+                    <div class="label">Critical</div>
+                </div>
+                <div class="stat-pill warning">
+                    <div class="value">31</div>
+                    <div class="label">High</div>
+                </div>
+                <div class="stat-pill info">
+                    <div class="value">34</div>
+                    <div class="label">Medium/Low</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Summary Cards -->
+        <div class="summary-row">
+            <div class="summary-card iv-anomaly">
+                <div class="icon">📊</div>
+                <div class="count">23</div>
+                <div class="type">IV Divergence Anomalies</div>
+            </div>
+            <div class="summary-card greek-anomaly">
+                <div class="icon">⚡</div>
+                <div class="count">19</div>
+                <div class="type">Greeks Inconsistencies</div>
+            </div>
+            <div class="summary-card parity-violation">
+                <div class="icon">⚖️</div>
+                <div class="count">18</div>
+                <div class="type">Put-Call Parity Violations</div>
+            </div>
+            <div class="summary-card skew-extreme">
+                <div class="icon">📈</div>
+                <div class="count">15</div>
+                <div class="type">Skew Extremes</div>
+            </div>
+            <div class="summary-card regime-signal">
+                <div class="icon">🌊</div>
+                <div class="count">7</div>
+                <div class="type">Regime Signals</div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="main-grid">
+            <!-- Left Panel: Anomaly List -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span>🔍</span>
+                        Anomaly Queue
+                    </div>
+                    <div class="severity-filter">
+                        <button class="filter-btn active">All</button>
+                        <button class="filter-btn">Critical</button>
+                        <button class="filter-btn">High</button>
+                    </div>
+                </div>
+                <div class="anomaly-list">
+                    <!-- Critical Anomalies -->
+                    <div class="anomaly-item selected">
+                        <span class="severity-badge critical">Critical</span>
+                        <div class="symbol">TSLA $382 Call</div>
+                        <div class="type">IV Divergence - Put-Call Parity</div>
+                        <div class="details">Call IV 105.14% vs Put IV 64.20% | Δ40.94%</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar filled critical"></div>
+                        </div>
+                    </div>
+                    <div class="anomaly-item">
+                        <span class="severity-badge critical">Critical</span>
+                        <div class="symbol">QQQ $575 Call</div>
+                        <div class="type">Extreme IV Anomaly</div>
+                        <div class="details">IV 128.02% - 70.1% above put IV</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar filled critical"></div>
+                        </div>
+                    </div>
+                    <div class="anomaly-item">
+                        <span class="severity-badge critical">Critical</span>
+                        <div class="symbol">SPY IV Skew</div>
+                        <div class="type">Skew Extreme - 95th Percentile</div>
+                        <div class="details">Skew ratio 1.727 - Institutional hedging surge</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar filled critical"></div>
+                        </div>
+                    </div>
+                    <div class="anomaly-item">
+                        <span class="severity-badge critical">Critical</span>
+                        <div class="symbol">GLD/SLV Regime</div>
+                        <div class="type">Cross-Asset Regime Signal</div>
+                        <div class="details">+6.70% SLV with equity strength - rare pattern</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar"></div>
+                        </div>
+                    </div>
+                    <div class="anomaly-item">
+                        <span class="severity-badge critical">Critical</span>
+                        <div class="symbol">TSLA $380 Call</div>
+                        <div class="type">IV Divergence - Put-Call Parity</div>
+                        <div class="details">Call IV 98.29% vs Put IV 65.54% | Δ32.75%</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar"></div>
+                        </div>
+                    </div>
+                    <div class="anomaly-item">
+                        <span class="severity-badge critical">Critical</span>
+                        <div class="symbol">META C1280</div>
+                        <div class="type">Greeks Anomaly - Negative Delta</div>
+                        <div class="details">OTM call with delta -0.5887 (should be positive)</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar filled critical"></div>
+                            <div class="impact-bar"></div>
+                        </div>
+                    </div>
+                    <!-- High Anomalies -->
+                    <div class="anomaly-item">
+                        <span class="severity-badge high">High</span>
+                        <div class="symbol">SPY $635 Put/Call</div>
+                        <div class="type">Put-Call Parity Violation</div>
+                        <div class="details">12.99% IV difference at same strike</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar"></div>
+                        </div>
+                    </div>
+                    <div class="anomaly-item">
+                        <span class="severity-badge high">High</span>
+                        <div class="symbol">SPY $653 C/P</div>
+                        <div class="type">Put-Call Parity Violation</div>
+                        <div class="details">Call IV 27.6% vs Put IV 37.0% | Δ9.4%</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                        </div>
+                    </div>
+                    <div class="anomaly-item">
+                        <span class="severity-badge high">High</span>
+                        <div class="symbol">SPY C653</div>
+                        <div class="type">IV Outlier</div>
+                        <div class="details">IV 37.01% vs neighbor avg 27.6%</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                        </div>
+                    </div>
+                    <div class="anomaly-item">
+                        <span class="severity-badge high">High</span>
+                        <div class="symbol">SPY C659</div>
+                        <div class="type">IV Outlier</div>
+                        <div class="details">IV 33.37% vs neighbor avg 25.3%</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                        </div>
+                    </div>
+                    <div class="anomaly-item">
+                        <span class="severity-badge high">High</span>
+                        <div class="symbol">META P370</div>
+                        <div class="type">Greeks Anomaly - Wrong Delta Sign</div>
+                        <div class="details">OTM put with delta +0.3577 (should be negative)</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                        </div>
+                    </div>
+                    <div class="anomaly-item">
+                        <span class="severity-badge high">High</span>
+                        <div class="symbol">META C805</div>
+                        <div class="type">Greeks Anomaly</div>
+                        <div class="details">OTM call with negative delta -0.6372</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                        </div>
+                    </div>
+                    <div class="anomaly-item">
+                        <span class="severity-badge high">High</span>
+                        <div class="symbol">NVDA C155</div>
+                        <div class="type">IV Anomaly</div>
+                        <div class="details">IV 111.55% - 12.8% deviation from expected</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                        </div>
+                    </div>
+                    <div class="anomaly-item">
+                        <span class="severity-badge high">High</span>
+                        <div class="symbol">QQQ-SPY Correlation</div>
+                        <div class="type">Correlation Breakdown</div>
+                        <div class="details">Implied corr 0.91 vs historical 0.94 (-3%)</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                        </div>
+                    </div>
+                    <div class="anomaly-item">
+                        <span class="severity-badge high">High</span>
+                        <div class="symbol">META P775</div>
+                        <div class="type">Extreme IV</div>
+                        <div class="details">IV 103.87% with theta/vega ratio 11.86</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                        </div>
+                    </div>
+                    <div class="anomaly-item">
+                        <span class="severity-badge high">High</span>
+                        <div class="symbol">META P765</div>
+                        <div class="type">Extreme IV</div>
+                        <div class="details">IV 97.35% with theta/vega ratio 11.08</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar filled high"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                        </div>
+                    </div>
+                    <!-- Medium Anomalies -->
+                    <div class="anomaly-item">
+                        <span class="severity-badge medium">Medium</span>
+                        <div class="symbol">QQQ C555</div>
+                        <div class="type">IV Outlier</div>
+                        <div class="details">IV 116.95% - Deep ITM liquidity issue</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled medium"></div>
+                            <div class="impact-bar filled medium"></div>
+                            <div class="impact-bar filled medium"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                        </div>
+                    </div>
+                    <div class="anomaly-item">
+                        <span class="severity-badge medium">Medium</span>
+                        <div class="symbol">QQQ C540</div>
+                        <div class="type">IV Outlier</div>
+                        <div class="details">IV 111.79% - Deep ITM anomaly</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled medium"></div>
+                            <div class="impact-bar filled medium"></div>
+                            <div class="impact-bar filled medium"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                        </div>
+                    </div>
+                    <div class="anomaly-item">
+                        <span class="severity-badge medium">Medium</span>
+                        <div class="symbol">QQQ 0DTE C639</div>
+                        <div class="type">Extreme Theta Decay</div>
+                        <div class="details">Theta = 416.67% of premium per day</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled medium"></div>
+                            <div class="impact-bar filled medium"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                        </div>
+                    </div>
+                    <div class="anomaly-item">
+                        <span class="severity-badge medium">Medium</span>
+                        <div class="symbol">QQQ 0DTE C638</div>
+                        <div class="type">Extreme Theta Decay</div>
+                        <div class="details">Theta = 411.33% of premium per day</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled medium"></div>
+                            <div class="impact-bar filled medium"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                        </div>
+                    </div>
+                    <div class="anomaly-item">
+                        <span class="severity-badge medium">Medium</span>
+                        <div class="symbol">QQQ 0DTE C637</div>
+                        <div class="type">Extreme Theta Decay</div>
+                        <div class="details">Theta = 405.33% of premium per day</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled medium"></div>
+                            <div class="impact-bar filled medium"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                        </div>
+                    </div>
+                    <div class="anomaly-item">
+                        <span class="severity-badge medium">Medium</span>
+                        <div class="symbol">META C35</div>
+                        <div class="type">Greeks Anomaly</div>
+                        <div class="details">Deep ITM call with negative delta -0.3001</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled medium"></div>
+                            <div class="impact-bar filled medium"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                        </div>
+                    </div>
+                    <div class="anomaly-item">
+                        <span class="severity-badge medium">Medium</span>
+                        <div class="symbol">XLF Sector</div>
+                        <div class="type">Sector Divergence</div>
+                        <div class="details">Financials -0.79% vs SPY +0.16%</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled medium"></div>
+                            <div class="impact-bar filled medium"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                        </div>
+                    </div>
+                    <div class="anomaly-item">
+                        <span class="severity-badge low">Low</span>
+                        <div class="symbol">SPY Term Structure</div>
+                        <div class="type">Contango Steepness</div>
+                        <div class="details">+1.4% Jan-Feb spread vs QQQ +0.4%</div>
+                        <div class="impact-meter">
+                            <div class="impact-bar filled low"></div>
+                            <div class="impact-bar filled low"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                            <div class="impact-bar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel: Charts and Tables -->
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <!-- Anomaly Distribution Chart -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span>📊</span>
+                            Anomaly Distribution by Type & Severity
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="anomalyDistChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Anomaly Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span>📋</span>
+                            Critical & High Severity Details
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="action-btn secondary">Export CSV</button>
+                            <button class="action-btn primary">Alert Setup</button>
+                        </div>
+                    </div>
+                    <div class="card-body" style="padding: 0; max-height: 400px; overflow-y: auto;">
+                        <table class="anomaly-table">
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Type</th>
+                                    <th>Severity</th>
+                                    <th>Value</th>
+                                    <th>Expected</th>
+                                    <th>Deviation</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="ticker">TSLA $382C</td>
+                                    <td>IV Parity</td>
+                                    <td><span class="severity-badge critical">Critical</span></td>
+                                    <td>105.14%</td>
+                                    <td>~65%</td>
+                                    <td style="color: var(--accent-red);">+40.94%</td>
+                                    <td>Conversion Arb</td>
+                                </tr>
+                                <tr>
+                                    <td class="ticker">QQQ $575C</td>
+                                    <td>IV Extreme</td>
+                                    <td><span class="severity-badge critical">Critical</span></td>
+                                    <td>128.02%</td>
+                                    <td>~57%</td>
+                                    <td style="color: var(--accent-red);">+70.1%</td>
+                                    <td>Liquidity Issue</td>
+                                </tr>
+                                <tr>
+                                    <td class="ticker">SPY Skew</td>
+                                    <td>Skew Ratio</td>
+                                    <td><span class="severity-badge critical">Critical</span></td>
+                                    <td>1.727</td>
+                                    <td>1.10-1.25</td>
+                                    <td style="color: var(--accent-red);">95th %ile</td>
+                                    <td>Hedge Signal</td>
+                                </tr>
+                                <tr>
+                                    <td class="ticker">GLD/SLV</td>
+                                    <td>Regime</td>
+                                    <td><span class="severity-badge critical">Critical</span></td>
+                                    <td>+6.70%</td>
+                                    <td>~0%</td>
+                                    <td style="color: var(--accent-red);">Divergence</td>
+                                    <td>Monitor</td>
+                                </tr>
+                                <tr>
+                                    <td class="ticker">TSLA $380C</td>
+                                    <td>IV Parity</td>
+                                    <td><span class="severity-badge critical">Critical</span></td>
+                                    <td>98.29%</td>
+                                    <td>~65%</td>
+                                    <td style="color: var(--accent-red);">+32.75%</td>
+                                    <td>Conversion Arb</td>
+                                </tr>
+                                <tr>
+                                    <td class="ticker">META $1280C</td>
+                                    <td>Delta Sign</td>
+                                    <td><span class="severity-badge critical">Critical</span></td>
+                                    <td>-0.5887</td>
+                                    <td>>0</td>
+                                    <td style="color: var(--accent-red);">Inverted</td>
+                                    <td>Data Quality</td>
+                                </tr>
+                                <tr>
+                                    <td class="ticker">SPY $635</td>
+                                    <td>PC Parity</td>
+                                    <td><span class="severity-badge high">High</span></td>
+                                    <td>40.6% P</td>
+                                    <td>27.6% C</td>
+                                    <td style="color: var(--accent-orange);">+12.99%</td>
+                                    <td>Arbitrage</td>
+                                </tr>
+                                <tr>
+                                    <td class="ticker">SPY $653</td>
+                                    <td>PC Parity</td>
+                                    <td><span class="severity-badge high">High</span></td>
+                                    <td>37.0% P</td>
+                                    <td>27.6% C</td>
+                                    <td style="color: var(--accent-orange);">+9.4%</td>
+                                    <td>Arbitrage</td>
+                                </tr>
+                                <tr>
+                                    <td class="ticker">META $370P</td>
+                                    <td>Delta Sign</td>
+                                    <td><span class="severity-badge high">High</span></td>
+                                    <td>+0.3577</td>
+                                    <td><0</td>
+                                    <td style="color: var(--accent-orange);">Inverted</td>
+                                    <td>Data Quality</td>
+                                </tr>
+                                <tr>
+                                    <td class="ticker">META $805C</td>
+                                    <td>Delta Sign</td>
+                                    <td><span class="severity-badge high">High</span></td>
+                                    <td>-0.6372</td>
+                                    <td>>0</td>
+                                    <td style="color: var(--accent-orange);">Inverted</td>
+                                    <td>Data Quality</td>
+                                </tr>
+                                <tr>
+                                    <td class="ticker">NVDA $155C</td>
+                                    <td>IV Outlier</td>
+                                    <td><span class="severity-badge high">High</span></td>
+                                    <td>111.55%</td>
+                                    <td>98.90%</td>
+                                    <td style="color: var(--accent-orange);">+12.8%</td>
+                                    <td>Wide Spread</td>
+                                </tr>
+                                <tr>
+                                    <td class="ticker">QQQ/SPY</td>
+                                    <td>Correlation</td>
+                                    <td><span class="severity-badge high">High</span></td>
+                                    <td>0.91</td>
+                                    <td>0.94</td>
+                                    <td style="color: var(--accent-orange);">-3.2%</td>
+                                    <td>Dispersion</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Anomaly Timeline -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span>⏱️</span>
+                            Detection Timeline
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <div class="time">20:45:00 ET</div>
+                                <div class="content"><strong>GLD/SLV Regime Signal</strong> - Precious metals surge detected alongside equity strength</div>
+                            </div>
+                            <div class="timeline-item warning">
+                                <div class="time">20:44:32 ET</div>
+                                <div class="content"><strong>SPY IV Skew Extreme</strong> - Skew ratio crossed 95th percentile threshold</div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="time">20:44:15 ET</div>
+                                <div class="content"><strong>TSLA Parity Violations</strong> - Multiple strikes showing 30%+ IV divergence</div>
+                            </div>
+                            <div class="timeline-item warning">
+                                <div class="time">20:43:58 ET</div>
+                                <div class="content"><strong>META Greeks Anomalies</strong> - 82 contracts with inconsistent delta signs</div>
+                            </div>
+                            <div class="timeline-item info">
+                                <div class="time">20:43:41 ET</div>
+                                <div class="content"><strong>QQQ 0DTE Theta</strong> - Extreme decay rates exceeding 400% detected</div>
+                            </div>
+                            <div class="timeline-item info">
+                                <div class="time">20:43:22 ET</div>
+                                <div class="content"><strong>Cross-Asset Scan</strong> - QQQ-SPY correlation breakdown identified</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Details and Actions -->
+            <div class="detail-panel">
+                <!-- Selected Anomaly Detail -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span>🔬</span>
+                            Anomaly Detail
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div style="text-align: center; padding: 15px; background: rgba(255, 59, 59, 0.1); border-radius: 12px; margin-bottom: 20px;">
+                            <div style="font-size: 2rem; margin-bottom: 5px;">TSLA $382 Call</div>
+                            <div style="color: var(--accent-red); font-weight: 700;">CRITICAL - IV Parity Violation</div>
+                        </div>
+                        <div class="detail-card">
+                            <h3>Contract Details</h3>
+                            <div class="metric-row">
+                                <span class="metric-label">Strike Price</span>
+                                <span class="metric-value">$382.00</span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">Expiration</span>
+                                <span class="metric-value">Jan 16, 2026</span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">Current Price</span>
+                                <span class="metric-value">$448.96</span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">Moneyness</span>
+                                <span class="metric-value success">17.5% ITM</span>
+                            </div>
+                        </div>
+                        <div class="detail-card">
+                            <h3>Anomaly Metrics</h3>
+                            <div class="metric-row">
+                                <span class="metric-label">Call IV</span>
+                                <span class="metric-value danger">105.14%</span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">Put IV (same strike)</span>
+                                <span class="metric-value">64.20%</span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">IV Differential</span>
+                                <span class="metric-value danger">+40.94%</span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">Standard Deviations</span>
+                                <span class="metric-value danger">+3.4σ</span>
+                            </div>
+                        </div>
+                        <div class="detail-card">
+                            <h3>Potential Action</h3>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px;">
+                                Conversion arbitrage opportunity: Buy 100 shares, buy put, sell call at same strike. IV differential implies 10-15% annualized edge if executed at mid-market.
+                            </p>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="action-btn primary" style="flex: 1;">Simulate Trade</button>
+                                <button class="action-btn secondary" style="flex: 1;">Add to Watch</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Risk Radar -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span>🎯</span>
+                            Risk Radar
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="radar-container">
+                            <canvas id="riskRadar"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span>📈</span>
+                            Anomaly Concentration
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="category-breakdown">
+                            <div class="category-item">
+                                <div class="icon" style="background: rgba(255, 59, 59, 0.2);">📊</div>
+                                <div class="info">
+                                    <h4>SPY</h4>
+                                    <span>12 anomalies</span>
+                                </div>
+                            </div>
+                            <div class="category-item">
+                                <div class="icon" style="background: rgba(255, 149, 0, 0.2);">📊</div>
+                                <div class="info">
+                                    <h4>QQQ</h4>
+                                    <span>34 anomalies</span>
+                                </div>
+                            </div>
+                            <div class="category-item">
+                                <div class="icon" style="background: rgba(255, 214, 10, 0.2);">📊</div>
+                                <div class="info">
+                                    <h4>TSLA</h4>
+                                    <span>19 anomalies</span>
+                                </div>
+                            </div>
+                            <div class="category-item">
+                                <div class="icon" style="background: rgba(48, 209, 88, 0.2);">📊</div>
+                                <div class="info">
+                                    <h4>META</h4>
+                                    <span>82 anomalies</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="severity-scale">
+                            <div class="bar" style="background: var(--accent-green);"></div>
+                            <div class="bar" style="background: var(--accent-yellow);"></div>
+                            <div class="bar" style="background: var(--accent-orange);"></div>
+                            <div class="bar" style="background: var(--accent-red);"></div>
+                        </div>
+                        <div class="severity-scale labels">
+                            <span>Low</span>
+                            <span>Medium</span>
+                            <span>High</span>
+                            <span>Critical</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Anomaly Distribution Chart
+        const distCtx = document.getElementById('anomalyDistChart').getContext('2d');
+        new Chart(distCtx, {
+            type: 'bar',
+            data: {
+                labels: ['IV Divergence', 'Greeks Issues', 'Parity Violations', 'Skew Extremes', 'Regime Signals'],
+                datasets: [
+                    {
+                        label: 'Critical',
+                        data: [5, 3, 4, 3, 2],
+                        backgroundColor: 'rgba(255, 59, 59, 0.8)',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'High',
+                        data: [8, 7, 8, 5, 3],
+                        backgroundColor: 'rgba(255, 149, 0, 0.8)',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Medium',
+                        data: [7, 6, 4, 5, 2],
+                        backgroundColor: 'rgba(255, 214, 10, 0.8)',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Low',
+                        data: [3, 3, 2, 2, 0],
+                        backgroundColor: 'rgba(48, 209, 88, 0.8)',
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: '#98989d',
+                            usePointStyle: true,
+                            padding: 15
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        grid: { color: 'rgba(44, 44, 46, 0.5)' },
+                        ticks: { color: '#98989d' }
+                    },
+                    y: {
+                        stacked: true,
+                        grid: { color: 'rgba(44, 44, 46, 0.5)' },
+                        ticks: { color: '#98989d' }
+                    }
+                }
+            }
+        });
+
+        // Risk Radar Chart
+        const radarCtx = document.getElementById('riskRadar').getContext('2d');
+        new Chart(radarCtx, {
+            type: 'radar',
+            data: {
+                labels: ['IV Risk', 'Greeks Risk', 'Parity Risk', 'Skew Risk', 'Regime Risk', 'Liquidity Risk'],
+                datasets: [{
+                    label: 'Current Risk Level',
+                    data: [85, 65, 78, 92, 70, 55],
+                    backgroundColor: 'rgba(255, 59, 59, 0.2)',
+                    borderColor: 'rgba(255, 59, 59, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(255, 59, 59, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(255, 59, 59, 1)'
+                }, {
+                    label: 'Normal Baseline',
+                    data: [30, 25, 20, 35, 20, 30],
+                    backgroundColor: 'rgba(48, 209, 88, 0.1)',
+                    borderColor: 'rgba(48, 209, 88, 0.5)',
+                    borderWidth: 1,
+                    pointBackgroundColor: 'rgba(48, 209, 88, 0.5)',
+                    borderDash: [5, 5]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#98989d',
+                            padding: 15
+                        }
+                    }
+                },
+                scales: {
+                    r: {
+                        angleLines: { color: 'rgba(44, 44, 46, 0.5)' },
+                        grid: { color: 'rgba(44, 44, 46, 0.5)' },
+                        pointLabels: { color: '#98989d', font: { size: 11 } },
+                        ticks: {
+                            display: false,
+                            stepSize: 20
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 100
+                    }
+                }
+            }
+        });
+
+        // Interactive anomaly list
+        document.querySelectorAll('.anomaly-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.anomaly-item').forEach(i => i.classList.remove('selected'));
+                this.classList.add('selected');
+            });
+        });
+
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
