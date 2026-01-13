@@ -1547,11 +1547,450 @@
             }
         });
 
+        // Anomaly data for detail panel
+        const anomalyData = {
+            'TSLA $382 Call': {
+                title: 'TSLA $382 Call',
+                severity: 'CRITICAL',
+                type: 'IV Parity Violation',
+                strike: '$382.00',
+                expiration: 'Jan 16, 2026',
+                currentPrice: '$448.96',
+                moneyness: '17.5% ITM',
+                moneynessClass: 'success',
+                callIV: '105.14%',
+                putIV: '64.20%',
+                ivDiff: '+40.94%',
+                stdDev: '+3.4σ',
+                action: 'Conversion arbitrage opportunity: Buy 100 shares, buy put, sell call at same strike. IV differential implies 10-15% annualized edge if executed at mid-market.'
+            },
+            'QQQ $575 Call': {
+                title: 'QQQ $575 Call',
+                severity: 'CRITICAL',
+                type: 'Extreme IV Anomaly',
+                strike: '$575.00',
+                expiration: 'Jan 16, 2026',
+                currentPrice: '$524.75',
+                moneyness: '8.7% OTM',
+                moneynessClass: 'danger',
+                callIV: '128.02%',
+                putIV: '57.92%',
+                ivDiff: '+70.1%',
+                stdDev: '+4.8σ',
+                action: 'Liquidity-driven anomaly. Consider selling overpriced call volatility via vertical spread to limit risk. Monitor for mean reversion.'
+            },
+            'SPY IV Skew': {
+                title: 'SPY IV Skew',
+                severity: 'CRITICAL',
+                type: 'Skew Extreme - 95th %ile',
+                strike: 'ATM Zone',
+                expiration: 'Jan 16, 2026',
+                currentPrice: '$595.89',
+                moneyness: 'N/A',
+                moneynessClass: '',
+                callIV: '27.6%',
+                putIV: '47.6%',
+                ivDiff: '1.727 Ratio',
+                stdDev: '95th %ile',
+                action: 'Institutional hedging surge detected. Consider put spreads to capture elevated skew premium. Risk-off signal for macro positioning.'
+            },
+            'GLD/SLV Regime': {
+                title: 'GLD/SLV Regime',
+                severity: 'CRITICAL',
+                type: 'Cross-Asset Regime Signal',
+                strike: 'N/A',
+                expiration: 'N/A',
+                currentPrice: 'SLV $30.58',
+                moneyness: '+6.70% Day',
+                moneynessClass: 'success',
+                callIV: 'GLD +1.87%',
+                putIV: 'SLV +6.70%',
+                ivDiff: '3.58x Ratio',
+                stdDev: 'Rare Pattern',
+                action: 'Silver outperformance with equity strength is historically rare. Monitor for rotation signal. May indicate inflation expectations or industrial demand surge.'
+            },
+            'TSLA $380 Call': {
+                title: 'TSLA $380 Call',
+                severity: 'CRITICAL',
+                type: 'IV Parity Violation',
+                strike: '$380.00',
+                expiration: 'Jan 16, 2026',
+                currentPrice: '$448.96',
+                moneyness: '18.1% ITM',
+                moneynessClass: 'success',
+                callIV: '98.29%',
+                putIV: '65.54%',
+                ivDiff: '+32.75%',
+                stdDev: '+2.9σ',
+                action: 'Conversion arbitrage opportunity similar to $382 strike. Consider box spread for risk-free capture of IV differential.'
+            },
+            'META C1280': {
+                title: 'META C1280',
+                severity: 'CRITICAL',
+                type: 'Greeks Anomaly - Negative Delta',
+                strike: '$1,280.00',
+                expiration: 'Jan 16, 2026',
+                currentPrice: '$609.28',
+                moneyness: '110% OTM',
+                moneynessClass: 'danger',
+                callIV: '89.5%',
+                putIV: 'N/A',
+                ivDiff: 'Delta: -0.5887',
+                stdDev: 'Data Error',
+                action: 'Data quality issue - OTM call should have positive delta. Avoid trading until data is verified. Report to broker/exchange.'
+            },
+            'SPY $635 Put/Call': {
+                title: 'SPY $635 Put/Call',
+                severity: 'HIGH',
+                type: 'Put-Call Parity Violation',
+                strike: '$635.00',
+                expiration: 'Jan 16, 2026',
+                currentPrice: '$595.89',
+                moneyness: '6.2% OTM',
+                moneynessClass: 'danger',
+                callIV: '27.61%',
+                putIV: '40.60%',
+                ivDiff: '+12.99%',
+                stdDev: '+2.1σ',
+                action: 'Put premium elevated relative to call. Consider put ratio spread or conversion to capture IV differential.'
+            },
+            'SPY $653 C/P': {
+                title: 'SPY $653 C/P',
+                severity: 'HIGH',
+                type: 'Put-Call Parity Violation',
+                strike: '$653.00',
+                expiration: 'Jan 16, 2026',
+                currentPrice: '$595.89',
+                moneyness: '9.6% OTM',
+                moneynessClass: 'danger',
+                callIV: '27.60%',
+                putIV: '37.01%',
+                ivDiff: '+9.4%',
+                stdDev: '+1.7σ',
+                action: 'Put premium elevated at this strike. Skew trade opportunity via risk reversal or put spread.'
+            },
+            'SPY C653': {
+                title: 'SPY C653',
+                severity: 'HIGH',
+                type: 'IV Outlier',
+                strike: '$653.00',
+                expiration: 'Jan 16, 2026',
+                currentPrice: '$595.89',
+                moneyness: '9.6% OTM',
+                moneynessClass: 'danger',
+                callIV: '37.01%',
+                putIV: '27.60%',
+                ivDiff: '+9.4%',
+                stdDev: '+1.8σ',
+                action: 'Call IV elevated vs neighbors. Consider selling this strike vs buying adjacent for calendar or diagonal spread.'
+            },
+            'SPY C659': {
+                title: 'SPY C659',
+                severity: 'HIGH',
+                type: 'IV Outlier',
+                strike: '$659.00',
+                expiration: 'Jan 16, 2026',
+                currentPrice: '$595.89',
+                moneyness: '10.6% OTM',
+                moneynessClass: 'danger',
+                callIV: '33.37%',
+                putIV: '25.30%',
+                ivDiff: '+8.07%',
+                stdDev: '+1.5σ',
+                action: 'IV surface irregularity. Potential butterfly spread opportunity centering on this strike.'
+            },
+            'META P370': {
+                title: 'META P370',
+                severity: 'HIGH',
+                type: 'Greeks Anomaly - Wrong Delta Sign',
+                strike: '$370.00',
+                expiration: 'Jan 16, 2026',
+                currentPrice: '$609.28',
+                moneyness: '39.3% OTM',
+                moneynessClass: 'danger',
+                callIV: 'N/A',
+                putIV: '67.2%',
+                ivDiff: 'Delta: +0.3577',
+                stdDev: 'Data Error',
+                action: 'OTM put should have negative delta. Data quality issue - verify before trading. Likely stale quote or calculation error.'
+            },
+            'META C805': {
+                title: 'META C805',
+                severity: 'HIGH',
+                type: 'Greeks Anomaly',
+                strike: '$805.00',
+                expiration: 'Jan 16, 2026',
+                currentPrice: '$609.28',
+                moneyness: '32.1% OTM',
+                moneynessClass: 'danger',
+                callIV: '78.4%',
+                putIV: 'N/A',
+                ivDiff: 'Delta: -0.6372',
+                stdDev: 'Data Error',
+                action: 'Negative delta on OTM call indicates data issue. Do not trade until verified.'
+            },
+            'NVDA C155': {
+                title: 'NVDA C155',
+                severity: 'HIGH',
+                type: 'IV Anomaly',
+                strike: '$155.00',
+                expiration: 'Jan 16, 2026',
+                currentPrice: '$136.45',
+                moneyness: '13.6% OTM',
+                moneynessClass: 'danger',
+                callIV: '111.55%',
+                putIV: '98.90%',
+                ivDiff: '+12.65%',
+                stdDev: '+1.9σ',
+                action: 'Call IV elevated at this strike. Wide bid-ask likely contributing. Consider selling vol via vertical spread if spread is acceptable.'
+            },
+            'QQQ-SPY Correlation': {
+                title: 'QQQ-SPY Correlation',
+                severity: 'HIGH',
+                type: 'Correlation Breakdown',
+                strike: 'N/A',
+                expiration: 'N/A',
+                currentPrice: 'QQQ $524.75',
+                moneyness: 'N/A',
+                moneynessClass: '',
+                callIV: 'Implied: 0.91',
+                putIV: 'Historical: 0.94',
+                ivDiff: '-3.2%',
+                stdDev: 'Divergence',
+                action: 'Tech underperformance vs broad market. Consider pairs trade or dispersion strategy. Monitor for rotation continuation.'
+            },
+            'META P775': {
+                title: 'META P775',
+                severity: 'HIGH',
+                type: 'Extreme IV',
+                strike: '$775.00',
+                expiration: 'Jan 16, 2026',
+                currentPrice: '$609.28',
+                moneyness: '27.2% OTM',
+                moneynessClass: 'danger',
+                callIV: 'N/A',
+                putIV: '103.87%',
+                ivDiff: 'θ/ν: 11.86',
+                stdDev: '+2.4σ',
+                action: 'High IV with extreme theta/vega ratio. Consider selling put spread to capture elevated premium with defined risk.'
+            },
+            'META P765': {
+                title: 'META P765',
+                severity: 'HIGH',
+                type: 'Extreme IV',
+                strike: '$765.00',
+                expiration: 'Jan 16, 2026',
+                currentPrice: '$609.28',
+                moneyness: '25.5% OTM',
+                moneynessClass: 'danger',
+                callIV: 'N/A',
+                putIV: '97.35%',
+                ivDiff: 'θ/ν: 11.08',
+                stdDev: '+2.1σ',
+                action: 'Elevated put IV similar to $775 strike. Part of broader elevated put skew in META options.'
+            },
+            'QQQ C555': {
+                title: 'QQQ C555',
+                severity: 'MEDIUM',
+                type: 'IV Outlier - Deep ITM',
+                strike: '$555.00',
+                expiration: 'Jan 16, 2026',
+                currentPrice: '$524.75',
+                moneyness: '5.5% ITM',
+                moneynessClass: 'success',
+                callIV: '116.95%',
+                putIV: '~45%',
+                ivDiff: '+71.95%',
+                stdDev: 'Liquidity',
+                action: 'Deep ITM liquidity issue causing inflated IV calculation. Wide spread expected - avoid unless market making.'
+            },
+            'QQQ C540': {
+                title: 'QQQ C540',
+                severity: 'MEDIUM',
+                type: 'IV Outlier - Deep ITM',
+                strike: '$540.00',
+                expiration: 'Jan 16, 2026',
+                currentPrice: '$524.75',
+                moneyness: '2.8% ITM',
+                moneynessClass: 'success',
+                callIV: '111.79%',
+                putIV: '~42%',
+                ivDiff: '+69.79%',
+                stdDev: 'Liquidity',
+                action: 'Similar deep ITM anomaly. IV calculation artifact from wide spread. Not actionable for retail.'
+            },
+            'QQQ 0DTE C639': {
+                title: 'QQQ 0DTE C639',
+                severity: 'MEDIUM',
+                type: 'Extreme Theta Decay',
+                strike: '$639.00',
+                expiration: 'Jan 13, 2026',
+                currentPrice: '$524.75',
+                moneyness: '21.8% OTM',
+                moneynessClass: 'danger',
+                callIV: '85.2%',
+                putIV: 'N/A',
+                ivDiff: 'θ: 416.67%/day',
+                stdDev: 'Extreme',
+                action: '0DTE extreme theta. Selling premium here is high conviction but requires precise timing. Consider only with strict risk management.'
+            },
+            'QQQ 0DTE C638': {
+                title: 'QQQ 0DTE C638',
+                severity: 'MEDIUM',
+                type: 'Extreme Theta Decay',
+                strike: '$638.00',
+                expiration: 'Jan 13, 2026',
+                currentPrice: '$524.75',
+                moneyness: '21.6% OTM',
+                moneynessClass: 'danger',
+                callIV: '84.8%',
+                putIV: 'N/A',
+                ivDiff: 'θ: 411.33%/day',
+                stdDev: 'Extreme',
+                action: '0DTE with 400%+ daily theta. Only for experienced traders with strict position limits.'
+            },
+            'QQQ 0DTE C637': {
+                title: 'QQQ 0DTE C637',
+                severity: 'MEDIUM',
+                type: 'Extreme Theta Decay',
+                strike: '$637.00',
+                expiration: 'Jan 13, 2026',
+                currentPrice: '$524.75',
+                moneyness: '21.4% OTM',
+                moneynessClass: 'danger',
+                callIV: '84.5%',
+                putIV: 'N/A',
+                ivDiff: 'θ: 405.33%/day',
+                stdDev: 'Extreme',
+                action: 'Part of 0DTE theta cluster. Gamma risk is extreme - one move can wipe out premium collected.'
+            },
+            'META C35': {
+                title: 'META C35',
+                severity: 'MEDIUM',
+                type: 'Greeks Anomaly',
+                strike: '$35.00',
+                expiration: 'Jan 16, 2026',
+                currentPrice: '$609.28',
+                moneyness: '1641% ITM',
+                moneynessClass: 'success',
+                callIV: 'N/A',
+                putIV: 'N/A',
+                ivDiff: 'Delta: -0.3001',
+                stdDev: 'Data Error',
+                action: 'Deep ITM call with negative delta is data error. Strike essentially trades as stock. Ignore for options strategies.'
+            },
+            'XLF Sector': {
+                title: 'XLF Sector',
+                severity: 'MEDIUM',
+                type: 'Sector Divergence',
+                strike: 'N/A',
+                expiration: 'N/A',
+                currentPrice: '$50.12',
+                moneyness: '-0.79% Day',
+                moneynessClass: 'danger',
+                callIV: 'XLF: -0.79%',
+                putIV: 'SPY: +0.16%',
+                ivDiff: '-0.95%',
+                stdDev: 'Divergent',
+                action: 'Financials underperforming broad market. Monitor for rate sensitivity or credit concerns. Potential pairs trade opportunity.'
+            },
+            'SPY Term Structure': {
+                title: 'SPY Term Structure',
+                severity: 'LOW',
+                type: 'Contango Steepness',
+                strike: 'ATM',
+                expiration: 'Jan-Feb 2026',
+                currentPrice: '$595.89',
+                moneyness: 'N/A',
+                moneynessClass: '',
+                callIV: 'Jan: 14.2%',
+                putIV: 'Feb: 15.6%',
+                ivDiff: '+1.4% Spread',
+                stdDev: 'Elevated',
+                action: 'Term structure steeper than QQQ. Consider calendar spreads to capture roll yield. Normal contango but worth monitoring.'
+            }
+        };
+
+        // Function to update detail panel
+        function updateDetailPanel(symbol) {
+            const data = anomalyData[symbol];
+            if (!data) return;
+
+            const detailPanel = document.querySelector('.detail-panel .card:first-child .card-body');
+            if (!detailPanel) return;
+
+            const severityColor = data.severity === 'CRITICAL' ? 'var(--accent-red)' :
+                                  data.severity === 'HIGH' ? 'var(--accent-orange)' :
+                                  data.severity === 'MEDIUM' ? 'var(--accent-yellow)' : 'var(--accent-green)';
+
+            detailPanel.innerHTML = `
+                <div style="text-align: center; padding: 15px; background: rgba(${data.severity === 'CRITICAL' ? '255, 59, 59' : data.severity === 'HIGH' ? '255, 149, 0' : data.severity === 'MEDIUM' ? '255, 214, 10' : '48, 209, 88'}, 0.1); border-radius: 12px; margin-bottom: 20px;">
+                    <div style="font-size: 2rem; margin-bottom: 5px;">${data.title}</div>
+                    <div style="color: ${severityColor}; font-weight: 700;">${data.severity} - ${data.type}</div>
+                </div>
+                <div class="detail-card">
+                    <h3>Contract Details</h3>
+                    <div class="metric-row">
+                        <span class="metric-label">Strike Price</span>
+                        <span class="metric-value">${data.strike}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Expiration</span>
+                        <span class="metric-value">${data.expiration}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Current Price</span>
+                        <span class="metric-value">${data.currentPrice}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Moneyness</span>
+                        <span class="metric-value ${data.moneynessClass}">${data.moneyness}</span>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <h3>Anomaly Metrics</h3>
+                    <div class="metric-row">
+                        <span class="metric-label">Call IV</span>
+                        <span class="metric-value danger">${data.callIV}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Put IV (same strike)</span>
+                        <span class="metric-value">${data.putIV}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">IV Differential</span>
+                        <span class="metric-value danger">${data.ivDiff}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Standard Deviations</span>
+                        <span class="metric-value danger">${data.stdDev}</span>
+                    </div>
+                </div>
+                <div class="detail-card">
+                    <h3>Potential Action</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px;">
+                        ${data.action}
+                    </p>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="action-btn primary" style="flex: 1;">Simulate Trade</button>
+                        <button class="action-btn secondary" style="flex: 1;">Add to Watch</button>
+                    </div>
+                </div>
+            `;
+        }
+
         // Interactive anomaly list
         document.querySelectorAll('.anomaly-item').forEach(item => {
             item.addEventListener('click', function() {
                 document.querySelectorAll('.anomaly-item').forEach(i => i.classList.remove('selected'));
                 this.classList.add('selected');
+
+                // Get the symbol from the clicked item
+                const symbolElement = this.querySelector('.symbol');
+                if (symbolElement) {
+                    const symbol = symbolElement.textContent.trim();
+                    updateDetailPanel(symbol);
+                }
             });
         });
 
@@ -1560,6 +1999,18 @@
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
+
+                const filter = this.textContent.trim().toLowerCase();
+                document.querySelectorAll('.anomaly-item').forEach(item => {
+                    const badge = item.querySelector('.severity-badge');
+                    const severity = badge ? badge.textContent.trim().toLowerCase() : '';
+
+                    if (filter === 'all' || severity === filter) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
             });
         });
     </script>
