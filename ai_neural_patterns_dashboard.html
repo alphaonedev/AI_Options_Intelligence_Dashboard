@@ -612,7 +612,10 @@
         .price-range {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 10px;
+            flex-wrap: nowrap;
+            max-width: 100%;
+            overflow: hidden;
         }
 
         .price-bound {
@@ -626,8 +629,9 @@
         }
 
         .bound-value {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: 700;
+            white-space: nowrap;
         }
 
         .bound-low { color: var(--accent-critical); }
@@ -635,7 +639,9 @@
         .bound-high { color: var(--accent-neural); }
 
         .move-bar {
-            width: 200px;
+            width: 100px;
+            min-width: 60px;
+            flex-shrink: 1;
             height: 8px;
             background: linear-gradient(90deg, var(--accent-critical), var(--accent-pulse), var(--accent-neural));
             border-radius: 4px;

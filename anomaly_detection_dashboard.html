@@ -1123,7 +1123,7 @@
                             Critical & High Severity Details
                         </div>
                         <div style="display: flex; gap: 10px;">
-                            <button class="action-btn secondary">Export CSV</button>
+                            <button class="action-btn secondary" id="exportCsvBtn">Export CSV</button>
                             <button class="action-btn primary">Alert Setup</button>
                         </div>
                     </div>
@@ -2012,6 +2012,55 @@
                     }
                 });
             });
+        });
+
+        // Export CSV functionality
+        document.getElementById('exportCsvBtn').addEventListener('click', function() {
+            // CSV header
+            let csvContent = 'Symbol,Type,Severity,Value,Expected,Deviation,Action\n';
+
+            // Anomaly data for CSV export
+            const anomalies = [
+                ['TSLA $382C', 'IV Parity', 'Critical', '105.14%', '~65%', '+40.94%', 'Conversion Arb'],
+                ['QQQ $575C', 'IV Extreme', 'Critical', '128.02%', '~57%', '+70.1%', 'Liquidity Issue'],
+                ['SPY Skew', 'Skew Ratio', 'Critical', '1.727', '1.10-1.25', '95th %ile', 'Hedge Signal'],
+                ['GLD/SLV', 'Regime', 'Critical', '+6.70%', '~0%', 'Divergence', 'Monitor'],
+                ['TSLA $380C', 'IV Parity', 'Critical', '98.29%', '~65%', '+32.75%', 'Conversion Arb'],
+                ['META $1280C', 'Delta Sign', 'Critical', '-0.5887', '>0', 'Inverted', 'Data Quality'],
+                ['SPY $635', 'PC Parity', 'High', '40.6% P', '27.6% C', '+12.99%', 'Arbitrage'],
+                ['SPY $653', 'PC Parity', 'High', '37.0% P', '27.6% C', '+9.4%', 'Arbitrage'],
+                ['META $370P', 'Delta Sign', 'High', '+0.3577', '<0', 'Inverted', 'Data Quality'],
+                ['META $805C', 'Delta Sign', 'High', '-0.6372', '>0', 'Inverted', 'Data Quality'],
+                ['NVDA $155C', 'IV Outlier', 'High', '111.55%', '98.90%', '+12.8%', 'Wide Spread'],
+                ['QQQ/SPY', 'Correlation', 'High', '0.91', '0.94', '-3.2%', 'Dispersion'],
+                ['META $775P', 'Extreme IV', 'High', '103.87%', '~50%', '+53.87%', 'Put Spread'],
+                ['META $765P', 'Extreme IV', 'High', '97.35%', '~50%', '+47.35%', 'Put Spread'],
+                ['QQQ C555', 'IV Outlier', 'Medium', '116.95%', '~45%', '+71.95%', 'Liquidity'],
+                ['QQQ C540', 'IV Outlier', 'Medium', '111.79%', '~42%', '+69.79%', 'Liquidity'],
+                ['QQQ 0DTE C639', 'Theta Decay', 'Medium', '416.67%/day', '<100%', 'Extreme', 'Risk Mgmt'],
+                ['QQQ 0DTE C638', 'Theta Decay', 'Medium', '411.33%/day', '<100%', 'Extreme', 'Risk Mgmt'],
+                ['QQQ 0DTE C637', 'Theta Decay', 'Medium', '405.33%/day', '<100%', 'Extreme', 'Risk Mgmt'],
+                ['META C35', 'Greeks', 'Medium', 'Delta -0.30', '>0.90', 'Data Error', 'Ignore'],
+                ['XLF Sector', 'Divergence', 'Medium', '-0.79%', '+0.16%', '-0.95%', 'Pairs Trade'],
+                ['SPY Term', 'Contango', 'Low', '+1.4%', '+0.4%', '+1.0%', 'Calendar']
+            ];
+
+            // Add rows to CSV
+            anomalies.forEach(row => {
+                csvContent += row.map(cell => `"${cell}"`).join(',') + '\n';
+            });
+
+            // Create download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'anomaly_detection_report_' + new Date().toISOString().slice(0,10) + '.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         });
     </script>
 
