@@ -555,9 +555,21 @@
         }
 
         /* Term structure viz */
+        .term-structure-card .card-header {
+            align-items: flex-start;
+            position: relative;
+        }
+
+        .term-structure-card .badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+
         .term-structure {
             display: flex;
             align-items: flex-end;
+            margin-top: 10px;
             justify-content: space-around;
             height: 150px;
             padding: 20px 0;
@@ -930,7 +942,7 @@
             </div>
 
             <!-- Term Structure -->
-            <div class="card col-6">
+            <div class="card col-6 term-structure-card">
                 <div class="card-header">
                     <div class="card-title">
                         <span class="icon">📈</span>
